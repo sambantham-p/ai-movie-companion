@@ -1,0 +1,89 @@
+[project]
+name = "movie-companion"
+version = "0.1.0"
+description = "Movie Companion backend: API, background jobs and the user-authorized browser worker."
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "redis>=5.2",
+    "arq>=0.26",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+# Installed only on the home machine that runs the user-authorized browser worker.
+browser = ["playwright>=1.49"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest-cov>=7.1.0",
+]
+
+[project.scripts]
+mc-api = "movie_companion.main:run"
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "ASYNC", "S", "SIM", "RUF"]
+ignore = ["S101"]  # assert is fine in tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]
+"alembic/**" = ["N999"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+packages = ["movie_companion"]
+
+[[tool.mypy.overrides]]
+module = ["arq.*", "playwright.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra"
+filterwarnings = [
+    "error::pytest.PytestUnraisableExceptionWarning",
+    # Third-party deprecations outside our control (starlette TestClient, arq pool close).
+    "ignore:Using `httpx` with `starlette.testclient`",
+    "ignore:Call to deprecated close:DeprecationWarning",
+]
+markers = ["integration: needs running Postgres/Redis", "browser: needs Playwright and a local Chrome/Chromium"]
+
+[tool.coverage.run]
+source = ["movie_companion"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "\\.\\.\\.$",
+]

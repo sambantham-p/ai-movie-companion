@@ -1,0 +1,18 @@
+# gitleaks config: default rules, minus local-only files that are git-ignored and never committed.
+# Real keys belong in backend/.env and frontend/.env.local; scanning them would only flag
+# themselves. Everything else in the repo must be free of secrets.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Git-ignored local files and dependency/build output"
+paths = [
+  '''(^|/)\.env$''',
+  '''(^|/)\.env\.(local|development|production|test)$''',
+  '''(^|/)node_modules/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)frontend/(dist|coverage)/''',
+  '''(^|/)backend/(logs|htmlcov)/''',
+  '''(^|/)\.claude/state/''',
+  '''(^|/)\.playwright-mcp/''',
+]

@@ -1,0 +1,71 @@
+# --- Secrets & local config -------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Browser session data (logged-in profiles must never be committed) ------------
+.movie-companion/
+chrome-profile/
+**/chrome-profile/
+*.har
+storage_state*.json
+**/captures/
+**/screenshots/
+playwright-report/
+test-results/
+
+# --- Python -----------------------------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# --- Node / frontend ----------------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/coverage/
+*.tsbuildinfo
+.vite/
+
+# --- Logs & temp ---------------------------------------------------------------------
+logs/
+*.log
+tmp/
+.tmp/
+
+# --- OS / editors ---------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+.audit-requirements.txt
+
+# --- AI assistant / project-private files (kept local, never published) -------------
+CLAUDE.md
+**/CLAUDE.md
+CLAUDE.local.md
+**/CLAUDE.local.md
+.claude/
+.mcp.json
+.playwright-mcp/
+docs/
+pyrightconfig.json
+
+# --- Test suites (owner-only, kept local) -------------------------------------------
+backend/tests/
+frontend/src/test/
+frontend/src/**/*.test.ts
+frontend/src/**/*.test.tsx
