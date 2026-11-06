@@ -1,186 +1,201 @@
-# Movie Companion
+# 🎬 Movie Companion
 
-A personal AI movie companion: discover genuinely good Tamil and English films, understand real
-audience opinion, find the best nearby screen, see exactly what a seat looks like in 3D, get
-warned before good seats run out, and let an agent carry the booking up to the payment page.
+**Movie Companion** is an AI-powered movie discovery and theatre booking assistant designed to simplify the entire movie-going experience — from finding the right movie to choosing the best theatre seats.
 
-> **Status:** Phase 0 — project foundation. The stack, structure, logging, database, workers,
-> browser lifecycle, health checks, tests and CI are in place. Product features are built
-> phase by phase (see [Roadmap](#16-development-roadmap)).
+It brings together movie ratings, audience reviews, theatre discovery, real-time seat availability, interactive 3D auditorium visualization, personalized seat recommendations, and human-assisted booking in one platform.
 
-## 1. Problem
+## Features
 
-Deciding on a film means checking IMDb, Reddit and review sites, comparing theatres and
-showtimes, and hunting for a good seat — often after the best seats are gone. Movie Companion
-puts that whole flow in one place.
+### Movie Discovery & Ratings
+- Discover Tamil, English, and other movies.
+- Explore movie details, genres, cast, trailers, and release information.
+- Compare ratings from IMDb, TMDB, Rotten Tomatoes, and Metacritic where available.
+- View a consolidated movie score with confidence indicators.
 
-## 2. Features and capabilities
+### AI-Powered Review Intelligence
+- Analyze audience reviews and sentiment.
+- Generate spoiler-aware summaries of positive and negative feedback.
+- Identify commonly praised and criticized aspects of a movie.
+- Provide review insights grounded in available audience feedback.
 
-| Area | What it does |
+### Theatre Discovery
+- Find nearby theatres and available movie shows.
+- Explore premium experiences such as IMAX, EPIQ, Gold Class, and other formats.
+- Browse theatres and screens by location, format, and preferences.
+- Maintain personalized theatre collections.
+
+### Smart Seat Selection & 3D Visualization
+- Explore interactive 3D auditorium layouts.
+- View seating arrangements and approximate screen perspectives.
+- Evaluate seats based on viewing angles, screen alignment, distance, and group preferences.
+- Receive personalized seat recommendations.
+
+### Live Seat Availability & Alerts
+- Check seat availability for supported shows.
+- Monitor preferred seats and seating zones.
+- Receive notifications when availability changes.
+- Track seat availability through authorized browser sessions.
+
+### Human-Assisted Booking
+- Assist with navigating supported BookMyShow booking flows.
+- Select preferred seats through user-authorized browser automation.
+- Pause for manual intervention when authentication or verification is required.
+- Hand control back to the user for payment and final confirmation.
+
+### AI Movie Assistant
+- Search for movies using natural language.
+- Get personalized movie and theatre recommendations.
+- Ask questions about ratings, reviews, shows, and seating options.
+- Manage watch history, personal ratings, and seating preferences.
+
+## Technology Stack
+
+| Layer | Technologies |
 |---|---|
-| Movie discovery | Recent Tamil and English releases, genres, global search |
-| Rating intelligence | IMDb, TMDB, Rotten Tomatoes and Metacritic combined into one vote-weighted score with confidence |
-| AI review intelligence | Structured audience sentiment from real reviews; never invented |
-| Theatre discovery | Location-based cinemas, premium collection first (per screen format) |
-| Live seat availability | Real seat maps from your own logged-in BookMyShow session, always time-stamped |
-| Seat scoring | Viewing-angle based seat scores (SMPTE/THX), centrality, comfort, adjacency |
-| 3D auditorium | Interactive seats, view-from-seat camera, walk-in animation |
-| Seat monitoring + alerts | Telegram / web push when your preferred seats start running out or come back |
-| Assisted booking | Agent drives the booking, pauses for login/OTP/CAPTCHA, stops before payment |
-| AI assistant & watch history | Natural-language discovery; your ratings and seat feedback |
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Backend | Python, FastAPI, Pydantic |
+| Database | PostgreSQL, SQLAlchemy, Alembic |
+| Caching & Background Jobs | Redis, ARQ |
+| Browser Automation | Playwright, Chrome CDP |
+| 3D Visualization | Three.js, React Three Fiber |
+| Testing & Quality | Pytest, Vitest, Ruff, mypy |
+| Infrastructure | Docker Compose, GitHub Actions |
 
-BookMyShow has no public API. Live seats and booking use **user-authorized automation of your
-own account in your own Chrome on your own home connection**, with strict limits. No
-CAPTCHA/OTP/anti-bot bypassing; payment is always manual.
+## Architecture
 
-## 3. Technology stack
-
-| Layer | Choice |
-|---|---|
-| Backend | Python 3.12, FastAPI, Pydantic v2, uvicorn, uv |
-| Database | PostgreSQL 16, SQLAlchemy 2 (async, asyncpg), Alembic |
-| Jobs & cache | Redis 7, ARQ (two queues: `jobs`, `browser`) |
-| Browser automation | Playwright driving Google Chrome with a dedicated persistent profile (or CDP attach) |
-| Frontend | React 19, TypeScript, Vite, React Router, TanStack Query, Zustand, Tailwind CSS v4 |
-| 3D | React Three Fiber + drei (three.js) |
-| Notifications (later) | Telegram Bot API, Web Push (VAPID), email |
-| LLM (later) | Provider-agnostic adapter (Anthropic / OpenAI / Gemini) |
-| Quality | pytest + pytest-cov, ruff, mypy strict · Vitest + Testing Library + V8 coverage, oxlint, Prettier · ≥ 85% coverage gates |
-| Infra | Docker Compose (local Postgres/Redis), GitHub Actions CI |
-
-
-## 4. Architecture
-
-```
-React SPA ──HTTP──> FastAPI ──> PostgreSQL
-                      │  └────> Redis (cache, heartbeats)
-                      └─enqueue─> Redis queues
-                                   ├─ jobs queue    → jobs worker     (data sync, scoring, alerts)
-                                   └─ browser queue → browser worker  (home machine only)
-                                                        └─ your Chrome profile → BookMyShow
+```text
+                   Movie Companion
+                          |
+                    React Frontend
+                          |
+                     FastAPI API
+                          |
+             +------------+------------+
+             |                         |
+         PostgreSQL                  Redis
+             |                         |
+        Application              Background Jobs
+           Data                        |
+                            +----------+----------+
+                            |                     |
+                       Job Worker           Browser Worker
+                                                  |
+                                           Chrome Browser
+                                                  |
+                                             BookMyShow
 ```
 
-One Python package runs as three processes. Only the browser worker ever talks to BookMyShow,
-and it runs on your own machine so it uses your IP and logged-in profile. It connects outward to
-Redis, so nothing on your machine is exposed to the internet.
+The application separates frontend presentation, backend business logic, persistent data, background processing, and browser automation.
 
-## 5. Repository structure
+## Project Structure
 
+```text
+movie-companion/
+├── backend/          # APIs, business logic, integrations
+├── frontend/         # Web application and 3D experience
+├── infra/            # Infrastructure configuration
+├── scripts/          # Development utilities
+├── .github/          # CI/CD workflows
+├── Makefile          # Development commands
+├── CLAUDE.md         # AI development instructions
+└── README.md
 ```
-backend/        FastAPI app, workers, browser automation, Alembic migrations
-frontend/       React + Vite SPA
-infra/          docker-compose.yml for Postgres and Redis
-scripts/        start-chrome-cdp.sh
-.github/        CI workflow (lint, type-check, security scans, build)
-Makefile        All commands — run `make help`
-```
 
-## 6. Prerequisites
+## Prerequisites
 
-- macOS or Linux
-- Python 3.12 and [uv](https://docs.astral.sh/uv/) (`brew install uv`)
-- Node.js 22+ and npm
-- Docker Desktop **or** local Postgres 16 + Redis 7 (`brew install postgresql@16 redis`)
-- Google Chrome (for the browser worker)
+- Python 3.12+
+- uv
+- Node.js 22+
+- npm
+- Docker and Docker Compose
+- Google Chrome
 
-## 7. Installation
+## Installation
+
+Clone the repository:
 
 ```bash
-make setup   # uv sync (with Playwright), npm ci, and creates backend/.env + frontend/.env.local
+git clone <repository-url>
+cd movie-companion
 ```
 
-## 8. Environment setup
-
-- `backend/.env` — from `backend/.env.example`. Defaults work for local development.
-  Set `OWNER_API_TOKEN` (required in production):
-  `python -c "import secrets; print(secrets.token_urlsafe(48))"`
-- `frontend/.env.local` — from `frontend/.env.example`. `VITE_*` values are public; no secrets.
-- Integration keys (TMDB, OMDb, Google Maps, YouTube, LLM, Telegram, VAPID) are only needed from
-  the phases that use them.
-
-## 9. Database and infrastructure
-
-With Docker:
+Install project dependencies:
 
 ```bash
-make infra-up    # Postgres on 127.0.0.1:5432, Redis on 127.0.0.1:6379 (+ test database)
-make migrate     # apply Alembic migrations
-make infra-down  # stop (data kept); `make infra-reset` deletes data
+make setup
 ```
 
-Without Docker (Homebrew):
+## Environment Configuration
+
+Configure the required environment variables using the provided example files.
 
 ```bash
-brew services start postgresql@16 && brew services start redis
-psql postgres -c "CREATE ROLE movie LOGIN PASSWORD 'movie';"
-psql postgres -c "CREATE DATABASE movie_companion OWNER movie;"
-psql postgres -c "CREATE DATABASE movie_companion_test OWNER movie;"
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Update the environment files with your database configuration, API credentials, and application settings.
+
+Never commit secrets, authentication tokens, or browser profile data.
+
+## Running the Application
+
+Start infrastructure services:
+
+```bash
+make infra-up
+```
+
+Apply database migrations:
+
+```bash
 make migrate
 ```
 
-New migration: `make migration m="add movies table"` (then review the generated file).
-
-## 10. Run the frontend
+Start the frontend:
 
 ```bash
-make web   # http://localhost:5173 — proxies /api to the backend
+make web
 ```
 
-## 11. Run the backend
+Start the backend:
 
 ```bash
-make api           # http://127.0.0.1:8000, docs at /docs (development only)
-make worker-jobs   # cloud-safe background jobs
-curl http://127.0.0.1:8000/api/v1/health         # liveness
-curl http://127.0.0.1:8000/api/v1/health/ready   # Postgres, Redis, worker heartbeats
+make api
 ```
 
-## 12. Run the browser worker (home machine)
+Start background workers when required:
 
 ```bash
-make browser-selfcheck   # opens Chrome on a local test page and closes it; never visits BookMyShow
-make worker-browser      # starts Chrome with the dedicated profile and consumes the browser queue
+make worker-jobs
+make worker-browser
 ```
 
-- Profile: `~/.movie-companion/chrome-profile` (outside the repo, mode 700). Log in to
-  BookMyShow yourself in that window once, when the live-seat phase begins.
-- Attach mode: `make chrome-cdp`, then set `BROWSER_MODE=cdp` in `backend/.env`. The DevTools
-  port listens on 127.0.0.1 only — never expose it.
-- No booking or seat-reading jobs exist yet; they arrive in phases 5–7.
+## Development & Testing
 
-## 13. Quality checks
+Run code quality checks:
 
 ```bash
-make lint               # ruff, mypy, oxlint, prettier, tsc
-make security           # Semgrep, gitleaks, pip-audit, npm audit (free, open source)
-make build              # production frontend build
+make lint
 ```
 
-The test suites (≥ 85% coverage on both sides, never contacting BookMyShow) are maintained
-privately and are not part of this repository.
+Run security checks:
 
-## 14. Logging
+```bash
+make security
+```
 
-Backend logs go to the console and to rotating files in `backend/logs/<service>.log`
-(`api`, `jobs`, `browser`, `migrations`), with request IDs and automatic secret redaction.
-Frontend uses `createLogger()` from `src/lib/logger.ts`.
+Build the application:
 
-## 15. Security notes
+```bash
+make build
+```
 
-Single-owner app protected by `OWNER_API_TOKEN`. Secrets live only in `.env` files (git-ignored).
-Browser profiles, captures and HAR files are git-ignored and never served. Remote access to the
-agent's browser must sit behind Tailscale or Cloudflare Access.
+## Logging & Security
 
-## 16. Development roadmap
-
-| Phase | Scope | Status |
-|---|---|---|
-| 0 | Foundation | Done |
-| 1 | Movie discovery, search, combined score | Next |
-| 2 | Review intelligence | Planned |
-| 3 | Theatre discovery, premium collections, deep links | Planned |
-| 4 | Seat scoring, 3D auditorium, perspective view | Planned |
-| 5 | Live seat reader (read-only) | Planned |
-| 6 | Seat monitoring and alerts | Planned |
-| 7 | Human-in-the-loop booking agent | Planned |
-| 8 | AI assistant, watch history, hardening | Planned |
+- Centralized application logging across backend services and workers.
+- Environment-based configuration and secure credential management.
+- Dedicated browser profiles for authorized browser automation.
+- Human intervention for authentication, CAPTCHA, and payment.
+- No CAPTCHA bypass, credential harvesting, or automated payment submission.
+- Browser automation depends on supported page behavior and may be restricted by third-party platform terms.
